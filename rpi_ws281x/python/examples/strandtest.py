@@ -15,6 +15,13 @@ import sys
 
 import LeshLib
 
+# GPIO Test
+RELAY_PIN1 = 37
+RELAY_PIN2 = 40
+import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BOARD)
+#GPIO.setup(RELAY_PIN1,GPIO.OUT)
+#GPIO.setup(RELAY_PIN2,GPIO.OUT)
 
 def signal_handler(signal, frame):
     colorWipe(strip, Color(0,0,0))
@@ -28,16 +35,16 @@ def opt_parse():
         signal.signal(signal.SIGINT, signal_handler)
 
 # LED strip configuration:
-LED_COUNT      = 59      # Number of LED pixels.
+LED_COUNT      = 64      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
 #LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA        = 10      # DMA channel to use for generating signal (try 10)
-LED_BRIGHTNESS = 10     # Set to 0 for darkest and 255 for brightest
+LED_BRIGHTNESS = 16     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
-LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
-
+#LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
+LED_STRIP      = ws.WS2812_STRIP   # Strip type and colour ordering
 
 
 
@@ -124,6 +131,54 @@ def SetPartofColor(strip,TempNote,TempVolume,beginLed,EndLed):
     for i in range(beginLed,EndLed):
         strip.setPixelColor(i,Color(colorR,colorG,colorB))
     strip.show()
+
+
+def SetBreatheColor(strip,TempNote,TempVolume,beginLed,EndLed):
+    if(TempVolume > 0):
+        colorR, colorG, colorB = LeshLib.GetColorByVolume(TempVolume)
+        DelayTime = 0.005
+        TotalFrame = 64 
+        strip.setBrightness(255);
+
+        for j in range(TotalFrame,0,-1):
+            tempR=int((j/TotalFrame)*float(colorR))
+            tempG=int((j/TotalFrame)*float(colorG))
+            tempB=int((j/TotalFrame)*float(colorB))
+                
+            if(j == 1):
+                for i in range(beginLed,EndLed):
+                    strip.setPixelColor(i,Color(0,0,0))
+            else:
+                for i in range(beginLed,EndLed):
+                    strip.setPixelColor(i,Color(tempR,tempG,tempB))
+            strip.show()
+            time.sleep(DelayTime)
+
+def SetBreatheColor_02(strip,TempNote,TempVolume,beginLed,EndLed):
+    if(TempVolume > 0):
+        colorR, colorG, colorB = LeshLib.GetColorByVolume(TempVolume)
+        DelayTime = 0.005
+
+        for intensity in range(255,0,-4):
+            strip.setBrightness(intensity);
+
+            if(intensity <= 4):
+                for i in range(beginLed,EndLed):
+                    strip.setPixelColor(i,Color(0,0,0))
+            else:
+                for i in range(beginLed,EndLed):
+                    strip.setPixelColor(i,Color(colorR,colorG,colorB))
+
+            strip.show()
+            time.sleep(DelayTime)
+
+
+def SetColorByGPIO(pin_num,TempVolume):
+    if TempVolume > 0:
+        GPIO.output(pin_num,True)
+    else:
+        GPIO.output(pin_num,False)
+
 
 
 def GetColorByMatrix(VolumeValue):
